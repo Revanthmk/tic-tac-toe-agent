@@ -102,8 +102,49 @@ def ai_move(board):
 @app.route("/")
 def home():
     return """
-    <h2>TicTacToe Web CLI</h2>
-    <p>Send POST request to /move</p>
+    <h2>TicTacToe</h2>
+    <div id="board"></div>
+    <p id="status"></p>
+
+    <script>
+        let board = ["","","","","","","","",""];
+
+        function render() {
+            const boardDiv = document.getElementById("board");
+            boardDiv.innerHTML = "";
+
+            board.forEach((cell, i) => {
+                const btn = document.createElement("button");
+                btn.innerText = cell || i;
+                btn.style.width = "60px";
+                btn.style.height = "60px";
+                btn.style.fontSize = "20px";
+                btn.onclick = () => play(i);
+                boardDiv.appendChild(btn);
+            });
+        }
+
+        async function play(move) {
+            if (board[move] !== "") return;
+
+            const res = await fetch("/move", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ board: board, move: move })
+            });
+
+            const data = await res.json();
+            board = data.board;
+
+            render();
+
+            if (data.winner) {
+                document.getElementById("status").innerText = "Winner: " + data.winner;
+            }
+        }
+
+        render();
+    </script>
     """
 
 
