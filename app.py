@@ -1,21 +1,20 @@
 from flask import Flask, request, jsonify
 from typing_extensions import TypedDict
 from typing import Literal
-from random import randint
 import os
 
 from langchain_groq import ChatGroq
 from langchain.tools import tool
-from langchain.messages import AnyMessage, SystemMessage, ToolMessage
+from langchain.messages import SystemMessage
 from langgraph.graph import StateGraph, START, END
 
 app = Flask(__name__)
 
-# 🔐 Use environment variable instead of hardcoded key
-groq_api_key = os.environ.get("GROQ_API_KEY")
+groq_api_key = "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"
+
 
 class GameState(TypedDict):
-    messages: list[AnyMessage]
+    messages: list
     board: list[str]
     winner: str | None
 
@@ -45,13 +44,16 @@ def get_valid_moves(board):
     return [i for i in range(9) if board[i] == ""]
 
 
+# ✅ REQUIRED DOCSTRINGS
 @tool
 def get_valid_moves_tool(board):
+    """Return a list of valid move indexes for the current board."""
     return get_valid_moves(board)
 
 
 @tool
 def next_player_tool(board):
+    """Return which player should play next: X or O."""
     return next_player(board)
 
 
@@ -62,7 +64,6 @@ model = ChatGroq(
 )
 
 tools = [get_valid_moves_tool, next_player_tool]
-tools_by_name = {t.name: t for t in tools}
 model_with_tools = model.bind_tools(tools)
 
 
@@ -86,14 +87,11 @@ def ai_move(board):
     messages = [SystemMessage(content=system_prompt)]
     response = model_with_tools.invoke(messages)
 
-    if hasattr(response, "tool_calls") and response.tool_calls:
-        valid = get_valid_moves(board)
-        return valid[0]
-
     try:
         move = int(response.content.strip())
     except:
-        move = get_valid_moves(board)[0]
+        valid = get_valid_moves(board)
+        move = valid[0]
 
     if move not in get_valid_moves(board):
         move = get_valid_moves(board)[0]
@@ -105,13 +103,7 @@ def ai_move(board):
 def home():
     return """
     <h2>TicTacToe Web CLI</h2>
-    <p>POST to /move with JSON:</p>
-    <pre>
-    {
-        "board": ["","","","","","","","",""],
-        "move": 0
-    }
-    </pre>
+    <p>Send POST request to /move</p>
     """
 
 
