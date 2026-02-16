@@ -3,3 +3,4 @@ langchain-groq
 langgraph
 typing-extensions
 flask
+gunicorn
